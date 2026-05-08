@@ -1,0 +1,6 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "c:\\Users\\mateo\\Downloads\\junit-platform-console-standalone-1.13.0-M1.jar"
+    ]
+}
