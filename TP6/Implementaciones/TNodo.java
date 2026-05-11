@@ -37,10 +37,11 @@ public class TNodo<E> implements Position<E>{
     public void setPadre(TNodo<E> padre){
         this.padre = padre;
     }
-
+    /* 
     public void addHijo(TNodo<E> hijo){
         hijos.addFirst(hijo);
     }
+    */
     public PositionList<TNodo<E>> getHijos(){
         return hijos;
     }
