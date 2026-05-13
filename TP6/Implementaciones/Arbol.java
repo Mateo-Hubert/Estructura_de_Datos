@@ -1,6 +1,7 @@
 package TP6.Implementaciones;
 
 import java.lang.Iterable;
+import java.util.Iterator;
 
 import TP5.Excepciones.InvalidPositionException;
 import TP5.Implementaciones.TDALista;
@@ -150,10 +151,79 @@ public class Arbol<E> implements Tree<E>{
             throw new InvalidPositionException("El padre o el nodo son inválidos");
         }
         TNodo<E> padre = (TNodo<E>)p;
-        TNodo<E> previo = (TNodo<E>)rb;
-        TNodo<E> nuevo = new TNodo<>(e);
-        padre.getHijos().addBefore(rb, nuevo);        
+        TNodo<E> anterior = (TNodo<E>)rb;
+        TNodo<E> nuevo = null;
+        Iterator<Position<TNodo<E>>> it = padre.getHijos().positions().iterator();
+        while (it.hasNext() && nuevo == null){
+            Position<TNodo<E>> aux = it.next();
+            if(anterior == aux.element()){
+                nuevo = new TNodo<>(e);
+                padre.getHijos().addBefore(aux, nuevo);
+                nuevo.setPadre(padre);
+                size++;
+            }
+        }
+        if(nuevo == null){//Nuevo no se creó porque rb no es hijo de p
+            throw new InvalidPositionException("rb no es hijo de p");
+        }
+
         return nuevo;
+    }
+    
+    public Position<E> addAfter(Position<E> p, Position<E> rb, E e){
+            if(p == null || rb == null || !(p instanceof TNodo<E>) || !(rb instanceof TNodo<E>)){
+                throw new InvalidPositionException("El padre o el nodo son inválidos");
+            }
+            TNodo<E> padre = (TNodo<E>)p;
+            TNodo<E> anterior = (TNodo<E>)rb;
+            TNodo<E> nuevo = null;
+            Iterator<Position<TNodo<E>>> it = padre.getHijos().positions().iterator();
+            while (it.hasNext() && nuevo == null){
+                Position<TNodo<E>> aux = it.next();
+                if(anterior == aux.element()){
+                    nuevo = new TNodo<>(e);
+                    padre.getHijos().addAfter(aux, nuevo);
+                    nuevo.setPadre(padre);
+                    size++;
+                }
+            }
+            if(nuevo == null){//Nuevo no se creó porque rb no es hijo de p
+                throw new InvalidPositionException("rb no es hijo de p");
+            }
+
+            return nuevo;
+        }
+
+    public void removeExternalNode (Position<E> p){
+        if (this.isEmpty() || //Si el árbol está vacío
+            p == null || !(p instanceof TNodo<E>) || //Si p no es un TNodo
+            !(((TNodo<E>)p).getHijos().isEmpty())){ //Si p no es una hoja
+            throw new InvalidPositionException("La posición no es válida");
+        }
+        TNodo<E> posicion = (TNodo<E>)p;
+        if(posicion == root()){
+            this.raiz = null;
+        }
+        else{
+            TNodo<E> padre = posicion.getPadre();
+            Iterator<Position<TNodo<E>>> it = padre.getHijos().positions().iterator();
+            boolean eliminada = false;
+            while (it.hasNext() && !eliminada){
+                Position<TNodo<E>> aux = it.next();
+                if(aux.element() == posicion){
+                    padre.getHijos().remove(aux);
+                    /*Idealmente en lugar de usar el remove dentro del while,
+                      debería guardar la posición y hacer el remove fuera para
+                      no arriesgarme a un: ConcurrentModificationException,
+                      tener en cuenta a futuro... Pero yo me olvidé xD
+                    */
+                    posicion.setPadre(null); //Solo para asegurarnos de que el GC haga lo suyo
+                    posicion.setElement(null);//Idem
+                    eliminada = true;
+                }
+            }
+        }    
+        size--;    
     }
 
 
