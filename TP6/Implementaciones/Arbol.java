@@ -44,7 +44,7 @@ public class Arbol<E> implements Tree<E>{
         raiz = new TNodo<>(elem);
         size++;
     }
-    public TNodo<E> root(){
+    public Position<E> root(){
         if(isEmpty()){
             throw new EmptyTreeException("El árbol no posee una raiz");
         }
@@ -195,16 +195,16 @@ public class Arbol<E> implements Tree<E>{
         }
 
     public void removeExternalNode (Position<E> p){
-        if (this.isEmpty() || //Si el árbol está vacío
-            p == null || !(p instanceof TNodo<E>) || //Si p no es un TNodo
-            !(((TNodo<E>)p).getHijos().isEmpty())){ //Si p no es una hoja
+        TNodo<E> posicion = checkPosition(p); //Si p no es un nodo, o el arbol está vacío lanza InvalidPositionException
+        if (!posicion.getHijos().isEmpty()){ //Si p no es una hoja
             throw new InvalidPositionException("La posición no es válida");
         }
-        TNodo<E> posicion = (TNodo<E>)p;
+        
         if(posicion == root()){
             this.raiz = null;
         }
         else{
+        //Para eliminar p, debo encontrar su posición en el árbol de la forma Position<TNodo<E>>
             TNodo<E> padre = posicion.getPadre();
             Iterator<Position<TNodo<E>>> it = padre.getHijos().positions().iterator();
             boolean eliminada = false;
@@ -212,11 +212,12 @@ public class Arbol<E> implements Tree<E>{
                 Position<TNodo<E>> aux = it.next();
                 if(aux.element() == posicion){
                     padre.getHijos().remove(aux);
-                    /*Idealmente en lugar de usar el remove dentro del while,
-                      debería guardar la posición y hacer el remove fuera para
-                      no arriesgarme a un: ConcurrentModificationException,
-                      tener en cuenta a futuro... Pero yo me olvidé xD
-                    */
+                    /**
+                      * Idealmente en lugar de usar el remove dentro del while,
+                      * debería guardar la posición y hacer el remove fuera para
+                      * no arriesgarme a un: ConcurrentModificationException,
+                      * tener en cuenta a futuro... Pero yo me olvidé xD
+                      */
                     posicion.setPadre(null); //Solo para asegurarnos de que el GC haga lo suyo
                     posicion.setElement(null);//Idem
                     eliminada = true;
@@ -226,6 +227,114 @@ public class Arbol<E> implements Tree<E>{
         size--;    
     }
 
+    public void removeInternalNode (Position<E> p){
+        TNodo<E> posicion = checkPNoRoot(p); //Si p no es un nodo, es una raíz o el arbol está vacío lanza InvalidPositionException
+        if(posicion.getHijos().isEmpty()){ //Si el nodo no es un nodo interno
+            throw new InvalidPositionException("La posición no corresponde a un nodo interno");
+        }
+        //Para eliminar p, debo encontrar su posición en el árbol de la forma Position<TNodo<E>>
+        TNodo<E> padre = posicion.getPadre();
+        Iterator<Position<TNodo<E>>> it = padre.getHijos().positions().iterator();
+        boolean encontrada = false;
+        Position<TNodo<E>> posicionP = null; //Posicion de p en forma Position<TNodo<E>> en lugar de Position<E>
+        while (it.hasNext() && !encontrada){
+                Position<TNodo<E>> aux = it.next();
+                if(aux.element() == posicion){
+                    posicionP = aux;
+                    encontrada = true;
+                }
+            }
+        for(TNodo<E> n : posicion.getHijos()){
+            n.setPadre(padre);
+            padre.getHijos().addBefore(posicionP, n);
+        }
+        padre.getHijos().remove(posicionP);
+        posicion.setElement(null);
+        posicion.setPadre(null);
+        size--;
+    }
 
+    public void removeNode (Position<E> p){
+        
+        TNodo<E> posicion = checkPosition(p); //Si p no es un nodo, el arbol está vacío lanza InvalidPositionException
+        if(posicion == root() && posicion.getHijos().size() > 1){
+            throw new InvalidPositionException("La raiz tiene más de un hijo");
+        }
+        if(posicion.getHijos().isEmpty()){
+            this.removeExternalNode(p);
+        }
+        else{
+            if(p == this.root()){
+                TNodo<E> hijoR = posicion.getHijos().first().element();
+                this.raiz = hijoR;
+                hijoR.setPadre(null);
+                posicion.setElement(null);
+                size--;
+            }
+            else{
+                this.removeInternalNode(p);
+            }
+        }
+    }
+
+    public E replace(Position<E> v, E e){
+        TNodo<E> posicion = checkPosition(v);
+        E elemento = posicion.element();
+        posicion.setElement(e);
+        return elemento;
+    }
+    
+    public Iterator<E> iterator(){
+        return this.preorden(checkPosition(this.root()), new TDALista<>()).iterator();
+    }
+
+    public Iterable<Position<E>> positions(){
+        return this.preorden(checkPosition(this.root()), new TDALista<>()).positions();
+    }
+
+
+    //Métodos privados
+
+     /**
+     * Chequea si el árbol está vacío y la posición es un nodo, 
+     * en caso de que si lo sea, la convierte a Nodo y la retorna
+     */
+    private TNodo<E> checkPosition(Position<E> p){
+        if(this.isEmpty()){ 
+            throw new InvalidPositionException("El árbol está vacío");
+        }
+        if(p == null || !(p instanceof TNodo<E>)){ 
+            throw new InvalidPositionException("La posición no es un nodo");
+        }
+        return (TNodo<E>)p;
+    }
+    
+    /**
+     * Chequea si el árbol está vacío y la posición es un nodo que no sea la raiz, 
+     * y si puede, la convierte a Nodo y la retorna
+     */
+    private TNodo<E> checkPNoRoot(Position<E> p){
+        if(this.isEmpty()){ 
+            throw new InvalidPositionException("El árbol está vacío");
+        }
+        if(p == null || !(p instanceof TNodo<E>) || //Si p no es un nodo
+           p == this.root()){ //Si p es la raíz
+            throw new InvalidPositionException("La posición no es válida");
+        }
+        return (TNodo<E>)p;
+    }
+    /**
+     * Dado un nodo, devuelve una lista en preorden de los elementos del todo el  
+     * arbol que posee a dicho nodo como raiz. Se genera recursivamente 
+     */
+    private TDALista<E> preorden(TNodo<E> nodo, TDALista<E> lista){
+        lista.addLast(nodo.element());
+        if(!nodo.getHijos().isEmpty()){
+            for(TNodo<E> hijo : nodo.getHijos()){
+                preorden(hijo, lista);
+            }
+        }
+        return lista;
+    }
 }
 
