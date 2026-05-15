@@ -52,21 +52,15 @@ public class Arbol<E> implements Tree<E>{
     }
 
     public Position<E> parent(Position<E> v){
-        if(v == null){
-            throw new InvalidPositionException("El árbol está vacío");
-        }
+        TNodo<E> aux = checkPosition(v);
         if(v == raiz){
             throw new BoundaryViolationException("El nodo es una raiz, por lo que no posee padre");
         }
-        TNodo<E> aux = (TNodo<E>)v;
         return aux.getPadre();
     }
 
     public Iterable<Position<E>> children (Position<E> v){
-        if(v == null){
-            throw new InvalidPositionException("El nodo pasado es nulo");
-        }
-        TNodo<E> aux = (TNodo<E>)v;
+        TNodo<E> aux = checkPosition(v);
         
         //Debo usar una lista auxiliar porque Java no permite el polimorfismo dentro
         //De las llaves, Iterable<Positions<E>> == TDALista<Position<E>>, pero
@@ -79,17 +73,15 @@ public class Arbol<E> implements Tree<E>{
         }
         return childs;
     }
-    
+
+    //Versión de children hecha por la IA
     public Iterable<Position<E>> childrenIA(Position<E> v) {
     if (v == null) {
         throw new InvalidPositionException("El nodo pasado es nulo");
     }
-    
     TNodo<E> aux = (TNodo<E>) v;
-    
     // Obtenemos la lista interna de hijos
     PositionList<TNodo<E>> listaHijos = aux.getHijos();
-
     // El doble casteo:
     // 1. (Iterable): Lo convertimos a tipo Iterable crudo ("perdemos" el <TNodo<E>>)
     // 2. (Iterable<Position<E>>): Lo convertimos al tipo que necesitamos
@@ -130,9 +122,9 @@ public class Arbol<E> implements Tree<E>{
             throw new InvalidPositionException("La posición es inválida y/o el árbol está vacío");
         }
         TNodo<E> padre = (TNodo<E>)p;
-        TNodo<E> hijo = new TNodo<>(e);
+        TNodo<E> hijo = new TNodo<>(e, padre);
         padre.getHijos().addFirst(hijo);
-
+        size++;
         return hijo;
     }
 
@@ -141,13 +133,13 @@ public class Arbol<E> implements Tree<E>{
             throw new InvalidPositionException("La posición es inválida y/o el árbol está vacío");
         }
         TNodo<E> padre = (TNodo<E>)p;
-        TNodo<E> hijo = new TNodo<>(e);
+        TNodo<E> hijo = new TNodo<>(e, padre);
         padre.getHijos().addLast(hijo);
-
+        size++;
         return hijo;
     }
     public Position<E> addBefore(Position<E> p, Position<E> rb, E e){
-        if(p == null || rb == null || !(p instanceof TNodo<E>) || !(rb instanceof TNodo<E>)){
+        if(this.isEmpty() || p == null || rb == null || !(p instanceof TNodo<E>) || !(rb instanceof TNodo<E>)){
             throw new InvalidPositionException("El padre o el nodo son inválidos");
         }
         TNodo<E> padre = (TNodo<E>)p;
@@ -171,7 +163,7 @@ public class Arbol<E> implements Tree<E>{
     }
     
     public Position<E> addAfter(Position<E> p, Position<E> rb, E e){
-            if(p == null || rb == null || !(p instanceof TNodo<E>) || !(rb instanceof TNodo<E>)){
+            if(this.isEmpty() || p == null || rb == null || !(p instanceof TNodo<E>) || !(rb instanceof TNodo<E>)){
                 throw new InvalidPositionException("El padre o el nodo son inválidos");
             }
             TNodo<E> padre = (TNodo<E>)p;
@@ -197,10 +189,11 @@ public class Arbol<E> implements Tree<E>{
     public void removeExternalNode (Position<E> p){
         TNodo<E> posicion = checkPosition(p); //Si p no es un nodo, o el arbol está vacío lanza InvalidPositionException
         if (!posicion.getHijos().isEmpty()){ //Si p no es una hoja
+            //System.out.println("RemoveExternalNode");
             throw new InvalidPositionException("La posición no es válida");
         }
         
-        if(posicion == root()){
+        if(posicion == this.raiz){
             this.raiz = null;
         }
         else{
@@ -228,30 +221,45 @@ public class Arbol<E> implements Tree<E>{
     }
 
     public void removeInternalNode (Position<E> p){
-        TNodo<E> posicion = checkPNoRoot(p); //Si p no es un nodo, es una raíz o el arbol está vacío lanza InvalidPositionException
+        TNodo<E> posicion = checkPosition(p); //Si p no es un nodo, o el arbol está vacío lanza InvalidPositionException
         if(posicion.getHijos().isEmpty()){ //Si el nodo no es un nodo interno
+            //System.out.println("RemoveInternalNode primer check");
             throw new InvalidPositionException("La posición no corresponde a un nodo interno");
         }
-        //Para eliminar p, debo encontrar su posición en el árbol de la forma Position<TNodo<E>>
-        TNodo<E> padre = posicion.getPadre();
-        Iterator<Position<TNodo<E>>> it = padre.getHijos().positions().iterator();
-        boolean encontrada = false;
-        Position<TNodo<E>> posicionP = null; //Posicion de p en forma Position<TNodo<E>> en lugar de Position<E>
-        while (it.hasNext() && !encontrada){
-                Position<TNodo<E>> aux = it.next();
-                if(aux.element() == posicion){
-                    posicionP = aux;
-                    encontrada = true;
-                }
-            }
-        for(TNodo<E> n : posicion.getHijos()){
-            n.setPadre(padre);
-            padre.getHijos().addBefore(posicionP, n);
+        if(posicion == root() && posicion.getHijos().size() != 1){
+            //System.out.println("RemoveInternalNode segundo check");
+            throw new InvalidPositionException("La posición es la raiz, pero no tiene un único hijo");
         }
-        padre.getHijos().remove(posicionP);
-        posicion.setElement(null);
-        posicion.setPadre(null);
-        size--;
+        if(posicion == root() && posicion.getHijos().size() == 1){
+            TNodo<E> nuevaRaiz = raiz.getHijos().first().element();
+            posicion.getHijos().remove(raiz.getHijos().first());
+            raiz = nuevaRaiz;
+            nuevaRaiz.setPadre(null);
+            posicion.setElement(null);
+            size--;
+        }
+        else{
+            //Para eliminar p, debo encontrar su posición en el árbol de la forma Position<TNodo<E>>
+            TNodo<E> padre = posicion.getPadre();
+            Iterator<Position<TNodo<E>>> it = padre.getHijos().positions().iterator();
+            boolean encontrada = false;
+            Position<TNodo<E>> posicionP = null; //Posicion de p en forma Position<TNodo<E>> en lugar de Position<E>
+            while (it.hasNext() && !encontrada){
+                    Position<TNodo<E>> aux = it.next();
+                    if(aux.element() == posicion){
+                        posicionP = aux;
+                        encontrada = true;
+                    }
+                }
+            for(TNodo<E> n : posicion.getHijos()){
+                n.setPadre(padre);
+                padre.getHijos().addBefore(posicionP, n);
+            }
+            padre.getHijos().remove(posicionP);
+            posicion.setElement(null);
+            posicion.setPadre(null);
+            size--;
+            }
     }
 
     public void removeNode (Position<E> p){
@@ -285,11 +293,20 @@ public class Arbol<E> implements Tree<E>{
     }
     
     public Iterator<E> iterator(){
-        return this.preorden(checkPosition(this.root()), new TDALista<>()).iterator();
+        TDALista<E> lista = new TDALista<>();
+        if(!this.isEmpty()){
+            lista = this.preorden(raiz, lista);
+        }
+
+        return lista.iterator();
     }
 
     public Iterable<Position<E>> positions(){
-        return this.preorden(checkPosition(this.root()), new TDALista<>()).positions();
+        TDALista<Position<E>> lista = new TDALista<>();
+        if(!this.isEmpty()){
+            lista = preordenPos(raiz, lista);
+        }
+        return lista;
     }
 
 
@@ -301,28 +318,16 @@ public class Arbol<E> implements Tree<E>{
      */
     private TNodo<E> checkPosition(Position<E> p){
         if(this.isEmpty()){ 
+            System.out.println("CheckPosition 1");
             throw new InvalidPositionException("El árbol está vacío");
         }
         if(p == null || !(p instanceof TNodo<E>)){ 
+            System.out.println("CheckPosition 2");
             throw new InvalidPositionException("La posición no es un nodo");
         }
         return (TNodo<E>)p;
     }
     
-    /**
-     * Chequea si el árbol está vacío y la posición es un nodo que no sea la raiz, 
-     * y si puede, la convierte a Nodo y la retorna
-     */
-    private TNodo<E> checkPNoRoot(Position<E> p){
-        if(this.isEmpty()){ 
-            throw new InvalidPositionException("El árbol está vacío");
-        }
-        if(p == null || !(p instanceof TNodo<E>) || //Si p no es un nodo
-           p == this.root()){ //Si p es la raíz
-            throw new InvalidPositionException("La posición no es válida");
-        }
-        return (TNodo<E>)p;
-    }
     /**
      * Dado un nodo, devuelve una lista en preorden de los elementos del todo el  
      * arbol que posee a dicho nodo como raiz. Se genera recursivamente 
@@ -336,5 +341,14 @@ public class Arbol<E> implements Tree<E>{
         }
         return lista;
     }
+    private TDALista<Position<E>> preordenPos(TNodo<E> nodo, TDALista<Position<E>> lista){
+        lista.addLast(nodo); // el TNodo mismo es una Position<E>
+        for(TNodo<E> hijo : nodo.getHijos()){
+            preordenPos(hijo, lista);
+        }
+        return lista;
+    }
 }
+
+
 

@@ -34,9 +34,7 @@ public class ColaConNodo<E> implements Queue<E>{
     }
 
     public void enqueue(E element){
-        if (element == null){
-            throw new NullPointerException("No se puede ingresar un elemento nulo en una cola");
-        }
+        
         Nodo<E> nNodo = new Nodo<E>(element);
         //Si está vacía tanto la la cabeza como el rabo se conectan nuevo nodo
         if(this.isEmpty()){
@@ -51,22 +49,22 @@ public class ColaConNodo<E> implements Queue<E>{
         }
         size++;
     }
-    	public E dequeue(){
-            if(isEmpty()){
-                throw new EmptyQueueException("La cola está vacía");
-            }
-            // Si la cola solo tiene un elemento head = tail, por lo que
-            // head = null es equivalente a head = head.getNext, con la 
-            // diferencia de que en ese caso debo hacer nulo a tail manualmente
-            Nodo<E> aux = head;
-            if(this.size == 1){
-                head = null;
-                tail = null;
-            }
-            else{
-                head = head.getNext();
-            }
-            this.size--;
-            return aux.element();
+    public E dequeue(){
+        if(isEmpty()){
+            throw new EmptyQueueException("La cola está vacía");
         }
+        // Si la cola solo tiene un elemento head = tail, por lo que
+        // head = null es equivalente a head = head.getNext, con la 
+        // diferencia de que en ese caso debo hacer nulo a tail manualmente
+        Nodo<E> aux = head;
+        if(this.size == 1){
+            head = null;
+            tail = null;
+        }
+        else{
+            head = head.getNext();
+        }
+        this.size--;
+        return aux.element();
+    }
 }
