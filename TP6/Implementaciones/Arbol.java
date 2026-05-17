@@ -8,6 +8,8 @@ import TP5.Implementaciones.TDALista;
 import TP5.Interfaz.Position;
 import TP5.Interfaz.PositionList;
 import TP5.Excepciones.BoundaryViolationException;
+import TP5.Implementaciones.TDAMapeo;
+import TP5.Interfaz.Map;
 
 import TP6.Interfaz.Tree;
 import TP6.Excepciones.InvalidOperationException;
@@ -308,8 +310,70 @@ public class Arbol<E> implements Tree<E>{
         }
         return lista;
     }
+    // Es de orden O(d + k) tal que d es la cantidad de hermanos de p, y k 
+    // la cantidad de hijos directos de p
+    public void eliminarUltimoHijo(Position<E> p){
+        TNodo<E> posicion = checkPosition(p);
+        if(isRoot(posicion)){
+            throw new InvalidOperationException("La raiz no se considera último hijo");
+        }
+        TNodo<E> padre = posicion.getPadre();
+        TNodo<E> ultimoHijo = null;
+        for(TNodo<E> e : padre.getHijos()){
+            ultimoHijo = e;
+        }
+        if(posicion == ultimoHijo){
+            removeNode(posicion);
+        }
+        else{
+            throw new InvalidPositionException("La posicion no es el último hijo de su padre");
+        }
+    }
 
+    public Map<Character, Integer> cantidadRepeticiones(Tree<Character> t){
+        if(t == null || t.isEmpty()){
+            throw new InvalidOperationException("El árbol está vacío");
+        }
+        
+        TDAMapeo<Character, Integer> mapa = new TDAMapeo<>();
+        for(Character c : t){
+            if(mapa.get(c) == null){
+                mapa.put(c, 1);
+            }
+            else{
+            mapa.put(c, mapa.get(c) + 1);
+            }
+        }
+        return mapa;
+    }
 
+    public Iterable<Position<E>> posicionesPosOrden(Arbol<E> t, E e){
+        TDALista<Position<E>> lista = new TDALista<>();
+        lista = posOrden((TNodo<E>)t.root(),e , lista);
+        return lista;
+    }
+
+    public int removeAll(Arbol<E> a, E e){
+        int contador = 0;
+        for(Position<E> p : a.positions()){
+            if(p.element() == e){
+                a.removeNode(p);
+                contador++;
+            }
+        }
+        return contador;
+    }
+    public boolean esta(Arbol<Integer> a, int n){
+        boolean aux = false;
+        Iterator<Integer> it = a.iterator();
+        while(aux == false && it.hasNext()){
+            int i = it.next();
+            if(i == n){
+                aux = true;
+            }
+        }
+        return aux;
+    }
     //Métodos privados
 
      /**
@@ -346,6 +410,16 @@ public class Arbol<E> implements Tree<E>{
         for(TNodo<E> hijo : nodo.getHijos()){
             preordenPos(hijo, lista);
         }
+        return lista;
+    }
+    //
+    private TDALista<Position<E>> posOrden(TNodo<E> nodo,E e, TDALista<Position<E>> lista){
+        for(TNodo<E> hijo : nodo.getHijos()){
+            posOrden(hijo,e , lista);
+        }
+        if(nodo.element().equals(e)){
+            lista.addLast(nodo);
+        } // el TNodo mismo es una Position<E>
         return lista;
     }
 }
