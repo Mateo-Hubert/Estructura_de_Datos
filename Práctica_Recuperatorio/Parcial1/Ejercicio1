@@ -1,0 +1,112 @@
+package Práctica_Recuperatorio.Parcial1;
+import TP5.Interfaz.Position;
+import TP5.Interfaz.PositionList;
+import TP5.Excepciones.*;
+
+// public class Ejercicio1:
+/**
+ * Suponga que dispone de la clase `ListaDE<E>` que implementa `PositionList<E>`. 
+ * La misma implementa una lista doblemente enlazada con nodos centinelas. 
+ * Defina la clase `NodoDE<E>` que representa un nodo doblemente enlazado. 
+ * Sólo programe el encabezado y atributos y proponga encabezados de getters y setters sin dar su cuerpo. 
+ * Luego, implemente el método: `public int eliminarDesdePosicion(Position<E> p, int k)`. 
+ * El método debe eliminar `k` elementos consecutivos a partir de la posición `p` (incluyéndola) y retornar
+ * la cantidad efectivamente eliminada. 
+ * Si la lista está vacía debe lanzar la excepción `EmptyListException`. 
+ * Si la posición es inválida, debe lanzar `InvalidPositionException`. 
+ * Si hay menos de `k` elementos a partir de la posición `p`, eliminar sólo los disponibles. 
+ * Si utiliza otros métodos del TDALista deberá implementarlos. 
+ * Si utiliza métodos auxiliares deberá implementarlos. 
+ * Puede asumir una definición de la clase `ListaDE` como sigue:
+    public class ListaDE<E> implements PositionList<E>{
+        protected NodoDE<E> head;
+        protected NodoDE<E> tail;
+        protected int cantElems;
+        ...
+    }
+ */
+class NodoDE<E> implements Position<E>{
+    //Atributos de instancia:
+    NodoDE<E> next;
+    NodoDE<E> prev;
+    E element;
+
+    //Constructor:
+    public NodoDE(){
+        this.next = null;
+        this.prev = null;
+        this.element = null;
+    }
+    public NodoDE(E element){
+        next = null;
+        prev = null;
+        this.element = element;
+    }
+    public NodoDE(E element, NodoDE<E> prev, NodoDE<E> next){
+        this.prev = prev;
+        this.next = next;
+        this.element = element;
+    }
+
+    //Métodos:
+    public E element(){
+        return element;
+    }
+    public void setElement(E element);
+
+    public NodoDE<E> getPrev();
+    public void setPrev(NodoDE<E> p);
+    
+    public NodoDE<E> getNext();
+    public void setNext(NodoDE<E> n);
+}
+
+class ListaDE<E> implements PositionList<E>{
+    protected NodoDE<E> head;
+    protected NodoDE<E> tail;
+    protected int cantElems;
+    
+    public int eliminarDesdePosicion(Position<E> p, int k){
+        Position<E> posicion = checkPosition(p);
+        int contador = 0;
+        while(contador < k && posicion != tail){
+            posicion = next(posicion);
+            remove(prev(posicion));
+            contador++;
+        }
+        return contador;
+    }
+    private NodoDE<E> checkPosition(Position<E> p){
+        if(isEmpty()){
+            throw new EmptyListException("La lista está vacía");
+        }
+        if(p == null || !(p instanceof NodoDE<?>) || p == head || p == tail){
+            throw new InvalidPositionException("La posición es inválida");
+        }
+        NodoDE<E> pos = ((NodoDE<E>)p);
+        return pos;
+    }
+
+    public Position<E> next(Position<E> p){
+        return ((NodoDE<E>)p).getNext();
+    }
+    public Position<E> prev(Position<E> p){
+        return ((NodoDE<E>)p).getPrev();
+    }
+    public E remove(Position<E> p){
+        NodoDE<E> posicion = checkPosition(p);
+        NodoDE<E> n = posicion.getNext();
+        NodoDE<E> pr = posicion.getPrev();
+        E e = p.element();
+        pr.setNext(n);
+        n.setPrev(pr);
+        posicion.setElement(null);
+        posicion.setNext(null);
+        posicion.setPrev(null);
+        cantElems--;
+        return e;
+    }
+    public boolean isEmpty(){
+        return cantElems == 0;
+    }
+}

@@ -1,0 +1,51 @@
+package Práctica_Recuperatorio.Parcial1;
+import TP5.Implementaciones.*;
+import java.util.Iterator;
+/*
+ * Ejercicio 2: Dadas dos listas L1 y L2 de caracteres, determine si L1 es un submulticonjunto de L2. 
+ * Esto significa que cada elemento de L1 debe aparecer en L2 al menos la misma cantidad de veces. 
+ * Para esto puede comparar los elementos por equivalencia. 
+ * Asuma que cuenta con el TDALista totalmente implementado. 
+ * Si utiliza métodos auxiliares en la modularización de su solución, deberá implementarlos.
+ * Ejemplo:
+ * L1 = [a, b, a], L2 = [b, a, c, a] -> TRUE
+ * L1 = [a, b, a], L2 = [a, b, c] -> FALSE
+ * L1 = [a, b, a], L2 = [a, a, b, c, a] -> TRUE
+*/
+
+
+class ejercicio2{
+public boolean es(TDALista<Character> l1, TDALista<Character> l2){
+    boolean esta = true;
+    TDALista<Character> aux = new TDALista<>();
+    Iterator<Character> it = l1.iterator();
+    while(it.hasNext() && esta){
+        Character ch = it.next();
+        int cont1 = 0;
+        int cont2 = 0;
+        boolean comprobado = false;
+        for(Character a: aux){
+            if(ch == a){
+                comprobado = true;
+            }
+        }
+        if(!comprobado){
+            aux.addLast(ch);
+            for(Character ch1: l1){
+                if(ch1 == ch){
+                    cont1++;
+                }
+            }
+            for(Character ch2: l2){
+                if(ch2 == ch){
+                    cont2++;
+                }
+            }
+            if(cont1 > cont2){
+            esta = false;
+            }
+        }
+    }
+    return esta;
+}
+}
