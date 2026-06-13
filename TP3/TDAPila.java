@@ -2,7 +2,7 @@ package TP3;
 import java.util.EmptyStackException;
 
 @SuppressWarnings("unchecked")
-class TDAPila<E> implements Stack<E>{
+public class TDAPila<E> implements Stack<E>{
     //Atributos de instancia
     private E[] pila;
     private int cant;

@@ -7,8 +7,10 @@ import TP6.Implementaciones.*;
 
 class Ejercicio3{
 class ArbolB extends ArbolBinario<String>{
+    public ArbolB(BNodo<String> root){
+        super(root);
+    }
     
-    @SuppressWarnings("unchecked")
     public Map<String,Integer> analisis(BinaryTree<String> b){
         TDAMapeo<String,Integer> m = new TDAMapeo<String,Integer>();
         m.put("Pares", 0);

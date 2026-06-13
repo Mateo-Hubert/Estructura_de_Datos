@@ -1,7 +1,7 @@
 package TP4.ListaDoble;
 import TP4.Interfaz.Position;
 
-class DNodo<E> implements Position<E> {
+public class DNodo<E> implements Position<E> {
 //Atributos
     private E element;
     private DNodo<E> next;

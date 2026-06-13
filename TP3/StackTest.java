@@ -14,7 +14,7 @@ import static org.junit.Assert.*;           //For assertions
 import java.util.EmptyStackException;       // For EmptyStackExceptions
 //import ar.edu.uns.cs.ed.tdas.excepciones.EmptyStackException;
 
-class StackTest {
+public class StackTest {
 	private Stack<String> s; //interface
 	private String n1,n2,n3;
  
