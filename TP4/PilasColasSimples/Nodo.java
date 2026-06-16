@@ -1,7 +1,7 @@
 package TP4.PilasColasSimples;
 import TP4.Interfaz.Position;
 
-class Nodo<E> implements Position<E> {
+public class Nodo<E> implements Position<E> {
 //Atributos
     private E elemento;
     private Nodo<E> siguiente;
